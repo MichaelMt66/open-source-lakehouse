@@ -1,0 +1,126 @@
+version: "3.3"
+services:
+    postgres:
+      image: postgres:13
+      environment:
+        POSTGRES_USER: postgresuser
+        POSTGRES_PASSWORD: passwd
+        POSTGRES_DB: metastore
+      volumes:
+        - ./postgres_data/raw_data:/input_data
+        - ./postgres_data/temp:/temp
+        - ./postgres_data/warehouse_setup:/docker-entrypoint-initdb.d
+      healthcheck:
+        # test: ["CMD", "pg_isready", "-U", "dbt_postgres"]
+        test: ["CMD", "psql", "-U", "postgresuser", "metastore"]
+        interval: 5s
+        retries: 5
+      restart: always
+      ports:
+        - "5432:5432"     
+      networks:
+          - metastore-network
+      container_name: postgres-database
+
+    hive-metastore:
+      image: michaelmt66/hive-metastore:3.1.2
+      depends_on:
+        - postgres
+      environment:
+        DATABASE_HOST: postgres
+        DATABASE_DB: metastore
+        DATABASE_USER: postgresuser
+        DATABASE_PASSWORD: passwd
+        AWS_ACCESS_KEY_ID:  ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        S3_BUCKET: hive-warehouse-data
+        S3_PREFIX: default
+        S3_ENDPOINT_URL: ""
+      ports:
+        - '9083:9083' 
+      networks:
+          - metastore-network
+      container_name: hive-metastore
+      healthcheck:
+        test: ["CMD-SHELL", "netstat -tnlp | grep 9083 || exit 1"]
+        interval: 30s
+        timeout: 30s
+        retries: 5
+      
+    spark-master:
+      image: michaelmt66/apache-spark:3.1.1
+      container_name: spark-master    
+      depends_on:
+        hive-metastore:
+          condition: service_healthy   
+      ports:
+        - "9090:8080"
+        - "7077:7077"     
+      volumes:
+        - ./apps:/opt/spark-apps
+        - ./data:/opt/spark-data
+      environment:
+        SPARK_LOCAL_IP: spark-master
+        SPARK_WORKLOAD: master
+        AWS_ACCESS_KEY_ID:  ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        HUDI_S3_BUCKET: ${HUDI_S3_BUCKET}       
+      networks:
+          - metastore-network      
+      
+    spark-worker-a:
+      image: michaelmt66/apache-spark:3.1.1
+      container_name: spark-worker-a        
+      ports:
+        - "9091:8080"
+        - "7000:7000"
+      depends_on:
+        - spark-master
+      environment:
+        SPARK_MASTER: spark://spark-master:7077
+        SPARK_WORKER_CORES: 2
+        SPARK_WORKER_MEMORY: 2G 
+        SPARK_DRIVER_MEMORY: 1G
+        SPARK_EXECUTOR_MEMORY: 1G
+        SPARK_WORKLOAD: worker
+        SPARK_LOCAL_IP: spark-worker-a
+        AWS_ACCESS_KEY_ID:  ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}      
+        HUDI_S3_BUCKET: ${HUDI_S3_BUCKET}       
+      volumes:
+        - ./apps:/opt/spark-apps
+        - ./data:/opt/spark-data
+      networks:
+          - metastore-network            
+        
+    spark-thrift-server:
+      image: michaelmt66/apache-spark:3.1.1
+      container_name: spark-thrift-server    
+      depends_on:
+        - spark-master
+        - spark-worker-a
+        
+      ports:
+        - "10000:10000"
+      environment:
+        SPARK_MASTER: spark://spark-master:7077
+        SPARK_WORKER_CORES: 1
+        SPARK_WORKER_MEMORY: 1G
+        SPARK_DRIVER_MEMORY: 1G
+        SPARK_EXECUTOR_MEMORY: 1G
+        SPARK_WORKLOAD: thift
+        SPARK_LOCAL_IP: spark-thrift-server
+        AWS_ACCESS_KEY_ID:  ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        HUDI_S3_BUCKET: ${HUDI_S3_BUCKET}       
+      volumes:
+          - ./apps:/opt/spark-apps
+          - ./data:/opt/spark-data   
+      networks:
+          - metastore-network            
+
+
+networks:
+  metastore-network:
+    external: false #to not use an existing network
+    name: metastore-network      

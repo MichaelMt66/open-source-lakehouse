@@ -1,0 +1,269 @@
+version: 2
+
+models:
+  - name: stg_customer
+    description: Cleansed table customer.
+    columns:
+      - name: id
+        description: Primary key for the customer table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_shippers
+    description: Cleansed table shippers.
+    columns:
+      - name: id
+        description: Primary key for the shippers table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_suppliers
+    description: Cleansed table suppliers.
+    columns:
+      - name: id
+        description: Primary key for the suppliers table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_orders_tax_status
+    description: Cleansed table order_tax_status.
+    columns:
+      - name: id
+        description: Primary key for the order_tax_status table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_order_status
+    description: Cleansed table stg_order_status.
+    columns:
+      - name: id
+        description: Primary key for the stg_order_status table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_purchase_order_status
+    description: Cleansed table stg_purchase_order_status.
+    columns:
+      - name: id
+        description: Primary key for the stg_purchase_order_status table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_employees
+    description: Cleansed table stg_employees.
+    columns:
+      - name: id
+        description: Primary key for the stg_employees table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_privileges
+    description: Cleansed table stg_privileges.
+    columns:
+      - name: id
+        description: Primary key for the stg_privileges table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_employee_privileges
+    description: Cleansed table stg_employee_privileges.
+    columns:
+      - name: employee_id
+        description: The employee's id. References the employee table.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_employees')
+              field: id
+      - name: privilege_id
+        description: The privileges's id. References the privileges table.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_privileges')
+              field: id              
+
+  - name: stg_orders
+    description: Cleansed table stg_orders.
+    columns:
+      - name: id
+        description: Primary key for the stg_orders table
+        tests:
+          - unique
+          - not_null    
+      - name: employee_id
+        description: The employee. References the employee table.
+        tests:
+          - relationships:
+              to: ref('stg_employees')
+              field: id
+      - name: customer_id
+        description: The customer_id. References the customer table.
+        tests:
+          - relationships:
+              to: ref('stg_customer')
+              field: id              
+      - name: shipper_id
+        description: The customer_id. References the shippers table.
+        tests:
+          - relationships:
+              to: ref('stg_shippers')
+              field: id     
+      - name: status_id
+        description: The status_id. References the _orders_status table.
+        tests:
+          - relationships:
+              to: ref('stg_orders_status')
+              field: id     
+      - name: tax_status_id
+        description: The tax_status_id. References the tax_status table.
+        tests:
+          - relationships:
+              to: ref('stg_orders_tax_status')
+              field: id     
+
+  - name: stg_products
+    description: Cleansed table stg_products.
+    columns:
+      - name: id
+        description: Primary key for the stg_products table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_purchase_orders
+    description: Cleansed table stg_purchase_orders.
+    columns:
+      - name: id
+        description: Primary key for the stg_purchase_orders table
+        tests:
+          - unique
+          - not_null
+
+
+  - name: stg_inventory_transaction_types
+    description: Cleansed table stg_inventory_transaction_types.
+    columns:
+      - name: id
+        description: Primary key for the stg_inventory_transaction_types table
+        tests:
+          - unique
+          - not_null
+
+
+  - name: stg_inventory_transactions
+    description: Cleansed table stg_inventory_transactions.
+    columns:
+      - name: id
+        description: Primary key for the stg_inventory_transactions table
+        tests:
+          - unique
+          - not_null    
+      - name: transaction_type
+        description: The transaction_type. References the stg_inventory_transaction_types table.
+        tests:
+          - relationships:
+              to: ref('stg_inventory_transaction_types')
+              field: id
+      - name: product_id
+        description: The product_id. References the stg_products table.
+        tests:
+          - relationships:
+              to: ref('stg_products')
+              field: id              
+      - name: purchase_order_id
+        description: The purchase_order_id. References the stg_purchase_orders table.
+        tests:
+          - relationships:
+              to: ref('stg_purchase_orders')
+              field: id     
+
+
+  - name: stg_order_details_status
+    description: Cleansed table stg_order_details_status.
+    columns:
+      - name: id
+        description: Primary key for the stg_order_details_status table
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_order_details
+    description: Cleansed table stg_order_details.
+    columns:
+      - name: id
+        description: Primary key for the stg_order_details table
+        tests:
+          - unique
+          - not_null    
+      - name: order_id
+        description: The order_id. References the stg_orders table.
+        tests:
+          - relationships:
+              to: ref('stg_orders')
+              field: id
+      - name: product_id
+        description: The product_id. References the stg_products table.
+        tests:
+          - relationships:
+              to: ref('stg_products')
+              field: id              
+      - name: status_id
+        description: The status_id. References the stg_order_details_status table.
+        tests:
+          - relationships:
+              to: ref('stg_order_details_status')
+              field: id     
+
+
+  - name: stg_purchase_order_details
+    description: Cleansed table stg_purchase_order_details.
+    columns:
+      - name: id
+        description: Primary key for the stg_order_details table
+        tests:
+          - unique
+          - not_null    
+      - name: purchase_order_id
+        description: The purchase_order_id. References the stg_purchase_orders table.
+        tests:
+          - relationships:
+              to: ref('stg_purchase_orders')
+              field: id
+      - name: product_id
+        description: The product_id. References the stg_products table.
+        tests:
+          - relationships:
+              to: ref('stg_products')
+              field: id              
+      - name: inventory_id
+        description: The inventory_id. References the stg_inventory_transactions table.
+        tests:
+          - relationships:
+              to: ref('stg_inventory_transactions')
+              field: id     
+
+  - name: stg_invoices
+    description: Cleansed table stg_invoices.
+    columns:
+      - name: id
+        description: Primary key for the stg_invoices table
+        tests:
+          - unique
+          - not_null    
+      - name: order_id
+        description: The order_id. References the stg_orders table.
+        tests:
+          - relationships:
+              to: ref('stg_orders')
+              field: id

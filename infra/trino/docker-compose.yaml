@@ -1,0 +1,19 @@
+version: "3.3"
+services:
+    trino:
+      image: trinodb/trino:416
+      environment:
+        AWS_ACCESS_KEY_ID:  ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      volumes:
+        - ./trino/catalog:/etc/trino/catalog
+      ports:
+        - "8080:8080"     
+      networks:
+          - metastore-network
+      container_name: trino
+
+networks:
+  metastore-network:
+    external: true #to not use an existing network
+    name: metastore-network      

@@ -1,0 +1,25 @@
+# version: 2
+
+# models:
+#     - name: dim_customer
+#       columns:
+#         - name: customer_id
+#           tests:
+#             - unique
+#             - not_null
+#         - name: country_region
+#           tests:
+#             - accepted_values:
+#                 values: ['USA']
+
+
+# version: 2
+
+# models:
+#     - name: dim_customer
+#       columns:              
+#           - name: customer_id
+#             tests:
+#                 - not_null
+#                 - unique
+
